@@ -41,37 +41,49 @@ def extract_stats(html_content):
            return None
    return None
 
+def extract_signature(html_content):
+    signature_pattern = r'"signature":"([^"]*)"'
+    signature_match = re.search(signature_pattern, html_content)
+    
+    if signature_match:
+        return signature_match.group(1)
+    return None
+
 def main():
-   while True:
-       try:
-           username = input("\nEntrez un nom d'utilisateur TikTok (ou 'q' pour quitter): ")
-           
-           if username.lower() == 'q':
-               print("Programme terminé")
-               break
-               
-           response = make_request(username)
-           print(f"\nStatus Code: {response.status_code}")
-           
-           stats = extract_stats(response.text)
-           if stats:
-               print(f"\nStats pour @{username}:")
-               print(f"Followers: {stats['followerCount']:,}")
-               print(f"Following: {stats['followingCount']:,}")
-               print(f"Hearts: {stats['heart']:,}")
-               print(f"Videos: {stats['videoCount']:,}")
-               print(f"Friends: {stats['friendCount']:,}")
-           else:
-               print("Impossible d'extraire les stats pour cet utilisateur")
-               
-           time.sleep(0.5)
-           
-       except KeyboardInterrupt:
-           print("\nProgramme arrêté par l'utilisateur")
-           break
-       except Exception as e:
-           print(f"Erreur: {e}")
-           time.sleep(0.5)
+    while True:
+        try:
+            username = input("\nEntrez un nom d'utilisateur TikTok (ou 'q' pour quitter): ")
+            
+            if username.lower() == 'q':
+                print("Programme terminé")
+                break
+                
+            response = make_request(username)
+            
+            if response.status_code == 200:
+                stats = extract_stats(response.text)
+                signature = extract_signature(response.text)
+                
+                print("\nRésultats:")
+                if stats:
+                    print(f"Followers: {stats.get('followerCount', 'N/A')}")
+                    print(f"Following: {stats.get('followingCount', 'N/A')}")
+                    print(f"Likes: {stats.get('heartCount', 'N/A')}")
+                    print(f"Videos: {stats.get('videoCount', 'N/A')}")
+                
+                if signature:
+                    print(f"Signature: {signature}")
+                    
+                if not stats and not signature:
+                    print("Aucune donnée trouvée pour cet utilisateur")
+                    
+            else:
+                print(f"Erreur lors de la requête. Code: {response.status_code}")
+                
+        except Exception as e:
+            print(f"Une erreur s'est produite: {str(e)}")
+            
+        time.sleep(1)
 
 if __name__ == "__main__":
    main()
